@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+        />
+        <title>Introduction to TypeScript</title>
+        <link
+            href="https://fonts.bunny.net/css2?family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            *,
+            *::before,
+            *::after {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            :root {
+                --ts-blue: #3178c6;
+                --ts-blue-light: #5ba4f5;
+                --ts-blue-dark: #235a97;
+                --bg: #020c1b;
+                --surface: #0d1b2e;
+                --surface2: #162135;
+                --border: #1e3557;
+                --text: #dce9f7;
+                --muted: #5a7a9e;
+                --code-bg: #060e1a;
+                --green: #4ade80;
+                --red: #f87171;
+                --yellow: #fbbf24;
+            }
+
+            html,
+            body {
+                height: 100%;
+                width: 100%;
+                overflow: hidden;
+                background: var(--bg);
+                color: var(--text);
+                font-family: "Outfit", sans-serif;
+            }
+
+            /* ─── SLIDE SYSTEM ─────────────────────────────── */
+            .slide {
+                position: absolute;
+                inset: 0;
+                display: none;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                padding: 48px 60px 68px;
+                opacity: 0;
+                transition: opacity 0.35s ease;
+                cursor: pointer;
+                user-select: none;
+                overflow: hidden;
+            }
+            .slide.active {
+                display: flex;
+                opacity: 1;
+            }
+
+            .slide::before {
+                content: "";
+                position: absolute;
+                inset: 0;
+                background-image: linear-gradient(rgba(49, 120, 198, 0.028) 1px, transparent 1px), linear-gradient(90deg, rgba(49, 120, 198, 0.028) 1px, transparent 1px);
+                background-size: 56px 56px;
+                pointer-events: none;
+                z-index: 0;
+            }
+
+            .slide > * {
+                position: relative;
+                z-index: 1;
+            }
+
+            /* ─── STEP REVEALS ─────────────────────────────── */
+            .step {
+                opacity: 0;
+                transform: translateY(14px);
+                transition:
+                    opacity 0.38s ease,
+                    transform 0.38s ease;
+            }
+            .step.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            /* ─── PROGRESS + HUD ───────────────────────────── */
+            .progress-bar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 3px;
+                background: var(--ts-blue);
+                transition: width 0.4s ease;
+                z-index: 999;
+                box-shadow: 0 0 12px rgba(49, 120, 198, 0.5);
+            }
+
+            .hud {
+                position: fixed;
+                bottom: 22px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                align-items: center;
+                gap: 14px;
+                z-index: 999;
+            }
+
+            .hud-btn {
+                width: 38px;
+                height: 38px;
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                color: var(--text);
+                font-size: 16px;
+                cursor: pointer;
+                display: grid;
+                place-items: center;
+                transition:
+                    background 0.2s,
+                    border-color 0.2s;
+            }
+            .hud-btn:hover {
+                background: var(--ts-blue);
+                border-color: var(--ts-blue);
+            }
+
+            .hud-counter {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 12px;
+                color: var(--muted);
+                padding: 8px 16px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                min-width: 64px;
+                text-align: center;
+            }
+
+            .badge-top {
+                position: fixed;
+                top: 18px;
+                right: 24px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 11px;
+                color: var(--muted);
+                letter-spacing: 0.06em;
+            }
+
+            .key-hint {
+                position: fixed;
+                bottom: 26px;
+                right: 24px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 11px;
+                color: var(--muted);
+                opacity: 0.55;
+            }
+
+            /* ─── SHARED TYPOGRAPHY ────────────────────────── */
+            h2 {
+                font-family: "Syne", sans-serif;
+                font-size: 2.05rem;
+                font-weight: 800;
+                color: var(--ts-blue-light);
+                margin-bottom: 30px;
+                letter-spacing: -0.01em;
+            }
+            h3 {
+                font-family: "Syne", sans-serif;
+                font-size: 1.15rem;
+                font-weight: 700;
+                color: var(--ts-blue-light);
+                margin-bottom: 10px;
+            }
+            code {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.88rem;
+                background: var(--surface2);
+                padding: 1px 7px;
+                border-radius: 4px;
+                color: var(--ts-blue-light);
+            }
+
+            /* ─── CODE BLOCK ────────────────────────────────── */
+            .code-block {
+                background: var(--code-bg);
+                border: 1px solid var(--border);
+                border-radius: 12px;
+                padding: 14px 18px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.78rem;
+                line-height: 1.8;
+                position: relative;
+                overflow: hidden;
+                white-space: pre-wrap;
+                word-break: break-word;
+                width: 100%;
+            }
+            .code-block::after {
+                content: attr(data-lang);
+                position: absolute;
+                top: 10px;
+                right: 14px;
+                font-size: 0.68rem;
+                color: var(--muted);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+            .kw {
+                color: #c792ea;
+            }
+            .ty {
+                color: #80cbc4;
+            }
+            .fn {
+                color: #82aaff;
+            }
+            .st {
+                color: #c3e88d;
+            }
+            .nm {
+                color: #f78c6c;
+            }
+            .cm {
+                color: #415a6e;
+                font-style: italic;
+            }
+            .ok {
+                color: #4ade80;
+            }
+            .er {
+                color: #f87171;
+                text-decoration: wavy underline;
+                text-decoration-color: #f87171;
+            }
+
+            /* ─── SLIDE 1 — COVER ───────────────────────────── */
+            .slide-cover {
+                background: radial-gradient(ellipse at 25% 55%, rgba(49, 120, 198, 0.18) 0%, transparent 55%), radial-gradient(ellipse at 75% 25%, rgba(49, 120, 198, 0.09) 0%, transparent 50%), var(--bg);
+                text-align: center;
+            }
+
+            .ts-logo {
+                width: 84px;
+                height: 84px;
+                background: var(--ts-blue);
+                border-radius: 14px;
+                display: grid;
+                place-items: center;
+                font-family: "Syne", sans-serif;
+                font-size: 40px;
+                font-weight: 900;
+                color: #fff;
+                margin: 0 auto 26px;
+                box-shadow: 0 0 64px rgba(49, 120, 198, 0.45);
+            }
+
+            .cover-title {
+                font-family: "Syne", sans-serif;
+                font-size: 4.8rem;
+                font-weight: 900;
+                line-height: 1;
+                background: linear-gradient(140deg, #fff 20%, var(--ts-blue-light));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 14px;
+            }
+
+            .cover-sub {
+                font-size: 1.25rem;
+                color: var(--muted);
+                letter-spacing: 0.06em;
+                margin-bottom: 40px;
+            }
+
+            .cover-chips {
+                display: flex;
+                gap: 12px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+            .chip {
+                padding: 6px 18px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 20px;
+                font-size: 0.9rem;
+                color: var(--muted);
+            }
+
+            /* ─── SLIDE 2 — TOC ─────────────────────────────── */
+            .toc-list {
+                display: flex;
+                flex-direction: column;
+                gap: 11px;
+                width: 100%;
+                max-width: 680px;
+            }
+            .toc-row {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                padding: 14px 22px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-left: 3px solid var(--ts-blue);
+                border-radius: 10px;
+            }
+            .toc-n {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.78rem;
+                color: var(--ts-blue);
+                min-width: 22px;
+            }
+            .toc-icon {
+                font-size: 1.25rem;
+            }
+            .toc-label {
+                font-size: 1rem;
+                font-weight: 500;
+            }
+
+            /* ─── SLIDE 3 — WHAT IS TS ──────────────────────── */
+            .cards-2x2 {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+                width: 100%;
+                max-width: 880px;
+            }
+            .info-card {
+                padding: 22px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+            }
+            .info-card .ic {
+                font-size: 1.8rem;
+                margin-bottom: 10px;
+            }
+            .info-card p {
+                font-size: 0.95rem;
+                color: var(--muted);
+                line-height: 1.6;
+            }
+
+            .flow-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 18px 28px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                grid-column: span 2;
+                justify-content: center;
+            }
+            .fb {
+                padding: 9px 18px;
+                border-radius: 8px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.82rem;
+                font-weight: 600;
+            }
+            .fb-ts {
+                background: rgba(49, 120, 198, 0.2);
+                border: 1px solid var(--ts-blue);
+                color: var(--ts-blue-light);
+            }
+            .fb-tsc {
+                background: var(--surface2);
+                border: 1px solid var(--border);
+                color: var(--muted);
+            }
+            .fb-js {
+                background: rgba(251, 191, 36, 0.12);
+                border: 1px solid #fbbf24;
+                color: #fbbf24;
+            }
+            .fb-br {
+                background: rgba(74, 222, 128, 0.1);
+                border: 1px solid #4ade80;
+                color: #4ade80;
+            }
+            .arr {
+                color: var(--muted);
+                font-size: 1.1rem;
+            }
+
+            /* ─── SLIDE 4 — TS VS JS ────────────────────────── */
+            .compare-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 18px;
+                width: 100%;
+                max-width: 860px;
+            }
+            .compare-col {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                min-width: 0;
+            }
+
+            .lang-header {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 9px 16px;
+                border-radius: 8px;
+                font-family: "Syne", sans-serif;
+                font-weight: 700;
+                font-size: 0.92rem;
+            }
+            .lang-js {
+                background: rgba(251, 191, 36, 0.12);
+                border: 1px solid #fbbf24;
+                color: #fbbf24;
+            }
+            .lang-ts {
+                background: rgba(49, 120, 198, 0.15);
+                border: 1px solid var(--ts-blue);
+                color: var(--ts-blue-light);
+            }
+
+            .small-badge {
+                display: inline-block;
+                padding: 3px 10px;
+                border-radius: 20px;
+                font-size: 0.72rem;
+                font-family: "JetBrains Mono", monospace;
+            }
+            .sb-err {
+                background: rgba(248, 113, 113, 0.12);
+                color: #f87171;
+                border: 1px solid rgba(248, 113, 113, 0.3);
+            }
+            .sb-ok {
+                background: rgba(74, 222, 128, 0.12);
+                color: #4ade80;
+                border: 1px solid rgba(74, 222, 128, 0.3);
+            }
+
+            /* ─── SLIDE 5 & 6 — FEATURES ────────────────────── */
+            .feat-list {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+                width: 100%;
+                max-width: 900px;
+            }
+            .feat-row {
+                display: grid;
+                grid-template-columns: 140px 1fr;
+                gap: 16px;
+                align-items: start;
+                min-width: 0;
+            }
+            .feat-row .code-block {
+                min-width: 0;
+            }
+            .feat-tag {
+                padding: 9px 14px;
+                background: rgba(49, 120, 198, 0.14);
+                border: 1px solid rgba(49, 120, 198, 0.3);
+                border-radius: 8px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.78rem;
+                color: var(--ts-blue-light);
+                text-align: center;
+                line-height: 1.4;
+            }
+
+            /* ─── SLIDE 7 — WHY / WHY NOT ───────────────────── */
+            .pros-cons {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 28px;
+                width: 100%;
+                max-width: 880px;
+            }
+            .pc-card {
+                padding: 22px 24px;
+                border-radius: 16px;
+            }
+            .pc-green {
+                background: rgba(74, 222, 128, 0.04);
+                border: 1px solid rgba(74, 222, 128, 0.2);
+            }
+            .pc-red {
+                background: rgba(248, 113, 113, 0.04);
+                border: 1px solid rgba(248, 113, 113, 0.2);
+            }
+            .pc-green h3 {
+                color: #4ade80;
+            }
+            .pc-red h3 {
+                color: #f87171;
+            }
+            .pc-list {
+                list-style: none;
+                display: flex;
+                flex-direction: column;
+                gap: 11px;
+                margin-top: 14px;
+            }
+            .pc-list li {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                font-size: 0.97rem;
+                line-height: 1.5;
+            }
+            .pc-list li .ico {
+                min-width: 20px;
+            }
+
+            /* ─── SLIDE 8 — WHERE TO EXPECT ─────────────────── */
+            .fw-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 16px;
+                width: 100%;
+                max-width: 880px;
+            }
+            .fw-card {
+                padding: 22px 16px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 14px;
+                text-align: center;
+                transition: border-color 0.25s;
+            }
+            .fw-card:hover {
+                border-color: var(--ts-blue);
+            }
+            .fw-card .fi {
+                font-size: 2.2rem;
+                margin-bottom: 8px;
+            }
+            .fw-card .fn2 {
+                font-family: "Syne", sans-serif;
+                font-weight: 700;
+                font-size: 0.95rem;
+                margin-bottom: 4px;
+            }
+            .fw-card .fd {
+                font-size: 0.8rem;
+                color: var(--muted);
+                line-height: 1.5;
+            }
+            .fw-pill {
+                display: inline-block;
+                margin-top: 8px;
+                padding: 2px 9px;
+                border-radius: 4px;
+                font-size: 0.68rem;
+                font-family: "JetBrains Mono", monospace;
+            }
+            .fw-pill.forced {
+                background: rgba(49, 120, 198, 0.18);
+                color: var(--ts-blue-light);
+            }
+            .fw-pill.rec {
+                background: rgba(251, 191, 36, 0.12);
+                color: #fbbf24;
+            }
+            .fw-pill.std {
+                background: rgba(74, 222, 128, 0.1);
+                color: #4ade80;
+            }
+
+            /* ─── SLIDE 9 — THANK YOU ───────────────────────── */
+            .ty-wrap {
+                text-align: center;
+            }
+            .ty-big:not(.not-blue) {
+                font-family: "Syne", sans-serif;
+                font-size: 5.5rem;
+                font-weight: 900;
+                line-height: 1;
+                background: linear-gradient(135deg, var(--ts-blue-light), var(--ts-blue));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+                margin-bottom: 14px;
+            }
+            .not-blue {
+                font-family: "Syne", sans-serif;
+                font-size: 5.5rem;
+                font-weight: 900;
+                line-height: 1;
+                margin-bottom: 14px;
+            }
+            .ty-sub {
+                font-size: 1.3rem;
+                color: var(--muted);
+                margin-bottom: 30px;
+            }
+            .ty-links {
+                font-size: 0.85rem;
+                color: var(--muted);
+                font-family: "JetBrains Mono", monospace;
+            }
+        </style>
+    </head>
+    <body>
+        <div
+            class="progress-bar"
+            id="prog"
+        ></div>
+        <div
+            class="badge-top"
+            id="badge"
+        >
+            01 / 09
+        </div>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 1 — COVER
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide slide-cover active"
+            data-slide="1"
+        >
+            <div class="ts-logo">TS</div>
+            <div class="cover-title">TypeScript</div>
+            <div class="cover-sub">JavaScript that scales</div>
+            <div class="cover-chips">
+                <span class="chip">📅 2026</span>
+                <span class="chip">👤 Sami Regragui</span>
+                <span class="chip">🎓 Youcode</span>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 2 — TABLE OF CONTENTS
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="2"
+        >
+            <h2>Table of Contents</h2>
+            <div class="toc-list">
+                <div class="toc-row step">
+                    <span class="toc-n">01</span><span class="toc-icon">🤔</span>
+                    <span class="toc-label">What is TypeScript?</span>
+                </div>
+                <div class="toc-row step">
+                    <span class="toc-n">02</span><span class="toc-icon">⚔️</span>
+                    <span class="toc-label">TypeScript vs JavaScript</span>
+                </div>
+                <div class="toc-row step">
+                    <span class="toc-n">03</span><span class="toc-icon">✨</span>
+                    <span class="toc-label">Key Features — Part 1</span>
+                </div>
+                <div class="toc-row step">
+                    <span class="toc-n">04</span><span class="toc-icon">🔬</span>
+                    <span class="toc-label">Key Features — Part 2</span>
+                </div>
+                <div class="toc-row step">
+                    <span class="toc-n">05</span><span class="toc-icon">⚖️</span>
+                    <span class="toc-label">Why TS / Why Not</span>
+                </div>
+                <div class="toc-row step">
+                    <span class="toc-n">06</span><span class="toc-icon">🌍</span>
+                    <span class="toc-label">Where to Expect TypeScript</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 3 — WHAT IS TYPESCRIPT
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="3"
+        >
+            <h2>What is TypeScript?</h2>
+            <div class="cards-2x2">
+                <div class="info-card step">
+                    <div class="ic">🏢</div>
+                    <h3>Created by Microsoft</h3>
+                    <p>Released in 2012 by Anders Hejlsberg — the same engineer behind C# and Turbo Pascal.</p>
+                </div>
+                <div class="info-card step">
+                    <div class="ic">🧩</div>
+                    <h3>Superset of JavaScript</h3>
+                    <p>Every valid <code>.js</code> file is a valid <code>.ts</code> file. TypeScript adds — it never removes.</p>
+                </div>
+                <div class="info-card step">
+                    <div class="ic">🔍</div>
+                    <h3>Static Typing</h3>
+                    <p>You declare what types are expected. The compiler checks them <em>before</em> the code ever runs.</p>
+                </div>
+                <div class="info-card step">
+                    <div class="ic">🌐</div>
+                    <h3>Compiles to JavaScript</h3>
+                    <p>Browsers don't run TS. It checks types, then compiles down to plain JS and disappears.</p>
+                </div>
+                <div class="flow-row step">
+                    <div class="fb fb-ts">.ts file</div>
+                    <div class="arr">→</div>
+                    <div class="fb fb-tsc">tsc</div>
+                    <div class="arr">→</div>
+                    <div class="fb fb-js">.js file</div>
+                    <div class="arr">→</div>
+                    <div class="fb fb-br">🌐 Browser</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 4 — TS VS JS
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="4"
+        >
+            <h2>TypeScript vs JavaScript</h2>
+            <div class="compare-grid">
+                <div class="compare-col step">
+                    <div class="lang-header lang-js">🟨 JavaScript — Dynamic Typing</div>
+                    <div
+                        class="code-block"
+                        data-lang="js"
+                    >
+                        <span class="kw">function</span> <span class="fn">add</span>(a, b) { <span class="kw">return</span> a + b }
+
+                        <span class="fn">add</span>(<span class="nm">2</span>, <span class="nm">3</span>) <span class="ok">// ✅ 5</span> 
+                        <span class="fn">add</span>(<span class="st">"2"</span>, <span class="nm">3</span>) <span class="cm">// 🤔 "23" — no warning</span> 
+                        <span class="fn">add</span>(<span class="kw">true</span>, <span class="kw">null</span>) <span class="cm">// 🤔 1 — no warning</span>
+                    </div>
+                    <span class="small-badge sb-err">❌ Error found only at runtime</span>
+                </div>
+                <div class="compare-col step">
+                    <div class="lang-header lang-ts">🔷 TypeScript — Static Typing</div>
+                    <div
+                        class="code-block"
+                        data-lang="ts"
+                    >
+                        <span class="kw">function</span> <span class="fn">add</span>( a<span class="kw">:</span> <span class="ty">number</span>, b<span class="kw">:</span> <span class="ty">number</span> )<span class="kw">:</span> <span class="ty">number</span> { <span class="kw">return</span> a + b }
+
+                        <span class="fn">add</span>(<span class="nm">2</span>, <span class="nm">3</span>) <span class="ok">// ✅ 5</span> 
+                        <span class="er"><span class="fn">add</span>(<span class="st">"2"</span>, <span class="nm">3</span>)</span> <span class="cm">// ❌ caught in your editor</span>
+                    </div>
+                    <span class="small-badge sb-ok">✅ Error caught at compile time</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 5 — KEY FEATURES PART 1
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="5"
+        >
+            <h2>Key Features — Part 1</h2>
+            <div class="feat-list">
+                <div class="feat-row step">
+                    <div class="feat-tag">Basic<br />Types</div>
+                    <div
+                        class="code-block"
+                        data-lang="ts"
+                    >
+                        <span class="kw">let</span> name<span class="kw">:</span> <span class="ty">string</span> = <span class="st">"Alice"</span> 
+                        <span class="kw">let</span> age<span class="kw">:</span> <span class="ty">number</span> = <span class="nm">25</span> 
+                        <span class="kw">let</span> admin<span class="kw">:</span> <span class="ty">boolean</span> = <span class="kw">true</span>
+
+                        <span class="kw">let</span> scores<span class="kw">:</span> <span class="ty">number</span>[] = [<span class="nm">10</span>, <span class="nm">20</span>, <span class="nm">30</span>]
+                    </div>
+                </div>
+
+                <div class="feat-row step">
+                    <div class="feat-tag">Interfaces</div>
+                    <div
+                        class="code-block"
+                        data-lang="ts"
+                    >
+                        <span class="kw">interface</span> <span class="ty">User</span> { name<span class="kw">:</span> <span class="ty">string</span> age<span class="kw">:</span> <span class="ty">number</span> email<span class="kw">?:</span> <span class="ty">string</span> <span class="cm">// optional field</span> }
+                    </div>
+                </div>
+
+                <div class="feat-row step">
+                    <div class="feat-tag">Enums</div>
+                    <div
+                        class="code-block"
+                        data-lang="ts"
+                    >
+                        <span class="kw">enum</span> <span class="ty">Direction</span> { Up, Down, Left, Right }
+
+                        <span class="kw">let</span> move<span class="kw">:</span> <span class="ty">Direction</span> = <span class="ty">Direction</span>.Up
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 6 — KEY FEATURES PART 2
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="6"
+        >
+            <h2>Key Features — Part 2</h2>
+            <div class="feat-list">
+                <div class="feat-row step">
+                    <div class="feat-tag">Generics</div>
+                    <div
+                        class="code-block"
+                        data-lang="ts"
+                    >
+                        <span class="cm">// Works with any type — but stays type-safe</span>
+                        <span class="kw">function</span> <span class="fn">first</span>&lt;<span class="ty">T</span>&gt;(arr<span class="kw">:</span> <span class="ty">T</span>[])<span class="kw">:</span> <span class="ty">T</span> { <span class="kw">return</span> arr[<span class="nm">0</span>] }
+
+                        <span class="fn">first</span>([<span class="nm">1</span>, <span class="nm">2</span>, <span class="nm">3</span>]) <span class="cm">// → number</span> <span class="fn">first</span>([<span class="st">"a"</span>, <span class="st">"b"</span>, <span class="st">"c"</span>]) <span class="cm">// → string</span>
+                    </div>
+                </div>
+
+                <div class="feat-row step">
+                    <div class="feat-tag">Utility<br />Types</div>
+                    <div
+                        class="code-block"
+                        data-lang="ts"
+                    >
+                        <span class="kw">interface</span> <span class="ty">User</span> { name<span class="kw">:</span> <span class="ty">string</span>; age<span class="kw">:</span> <span class="ty">number</span>; email<span class="kw">:</span> <span class="ty">string</span> }
+
+                        <span class="ty">Partial</span>&lt;<span class="ty">User</span>&gt; <span class="cm">// all fields optional</span> 
+                        <span class="ty">Required</span>&lt;<span class="ty">User</span>&gt; <span class="cm">// all fields required</span> 
+                        <span class="ty">Pick</span>&lt;<span class="ty">User</span>, <span class="st">"name"</span> | <span class="st">"email"</span>&gt; <span class="cm">// keep only these</span> 
+                        <span class="ty">Omit</span>&lt;<span class="ty">User</span>, <span class="st">"age"</span>&gt; <span class="cm">// exclude a field</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 7 — WHY TS / WHY NOT
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="7"
+        >
+            <h2>Why TypeScript — Why Not</h2>
+            <div class="pros-cons">
+                <div class="pc-card pc-green step">
+                    <h3>✅ Reasons to use it</h3>
+                    <ul class="pc-list">
+                        <li><span class="ico">🐛</span> Catches bugs before the user ever does</li>
+                        <li><span class="ico">📖</span> Code is self-documenting — types explain intent</li>
+                        <li><span class="ico">🤝</span> Essential in teams — everyone knows what to pass</li>
+                        <li><span class="ico">🧠</span> Much better editor autocomplete & IntelliSense</li>
+                        <li><span class="ico">📈</span> Scales well on large, long-lived codebases</li>
+                    </ul>
+                </div>
+
+                <div class="pc-card pc-red step">
+                    <h3>❌ Reasons to skip it</h3>
+                    <ul class="pc-list">
+                        <li><span class="ico">⚙️</span> Extra compilation step every time you run</li>
+                        <li><span class="ico">📝</span> More verbose — you write more for the same result</li>
+                        <li><span class="ico">📚</span> Learning curve, especially generics & utility types</li>
+                        <li><span class="ico">🚀</span> Overkill for quick scripts or tiny projects</li>
+                        <li><span class="ico">🧑‍💻</span> Solo dev who knows JS deeply? Maybe not worth it</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 8 — WHERE TO EXPECT TS
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide"
+            data-slide="8"
+        >
+            <h2>Where to Expect TypeScript</h2>
+            <div class="fw-grid">
+                <div class="fw-card step">
+                    <div class="fi">🅰️</div>
+                    <div class="fn2">Angular</div>
+                    <div class="fd">Google's framework — TS is mandatory, no JS option</div>
+                    <div class="fw-pill forced">Forced</div>
+                </div>
+                <div class="fw-card step">
+                    <div class="fi">🐈</div>
+                    <div class="fn2">NestJS</div>
+                    <div class="fd">Node.js backend framework built entirely in TypeScript</div>
+                    <div class="fw-pill forced">Forced</div>
+                </div>
+                <div class="fw-card step">
+                    <div class="fi">▲</div>
+                    <div class="fn2">Next.js</div>
+                    <div class="fd">React meta-framework — TS is the default since v13</div>
+                    <div class="fw-pill rec">Recommended</div>
+                </div>
+                <div class="fw-card step">
+                    <div class="fi">⚡</div>
+                    <div class="fn2">Vite</div>
+                    <div class="fd">Scaffolds TS projects out of the box via templates</div>
+                    <div class="fw-pill rec">Recommended</div>
+                </div>
+                <div class="fw-card step">
+                    <div class="fi">💚</div>
+                    <div class="fn2">Nuxt 3</div>
+                    <div class="fd">Vue meta-framework — fully TypeScript-first</div>
+                    <div class="fw-pill rec">Recommended</div>
+                </div>
+                <div class="fw-card step">
+                    <div class="fi">🏢</div>
+                    <div class="fn2">Enterprise</div>
+                    <div class="fd">Any large team or production codebase in 2024+</div>
+                    <div class="fw-pill std">Industry standard</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     SLIDE 9 — THANK YOU
+──────────────────────────────────────────────────────── -->
+        <section
+            class="slide slide-cover"
+            data-slide="9"
+        >
+            <div class="ty-wrap">
+                <div class="ty-big">Thank You</div>
+                <span class="not-blue">🙏</span>
+                <div class="ty-sub">Any questions 🔪</div>
+                <div
+                    class="ts-logo"
+                    style="margin: 0 auto 20px"
+                >
+                    TS
+                </div>
+                <div class="ty-links">typescriptlang.org &nbsp;·&nbsp; github.com/microsoft/TypeScript</div>
+            </div>
+        </section>
+
+        <!-- ───────────────────────────────────────────────────────
+     HUD
+──────────────────────────────────────────────────────── -->
+        <nav class="hud">
+            <button
+                class="hud-btn"
+                id="prevBtn"
+            >
+                ←
+            </button>
+            <div
+                class="hud-counter"
+                id="counter"
+            >
+                1 / 9
+            </div>
+            <button
+                class="hud-btn"
+                id="nextBtn"
+            >
+                →
+            </button>
+            <button
+                class="hud-btn"
+                id="nextSlideBtn"
+            >
+                ➾
+            </button>
+            <button
+                class="hud-btn"
+                id="showFullContentBtn"
+            >
+                ⤶
+            </button>
+        </nav>
+        <div class="key-hint">
+            ← OR leftArrow to regress<br />→ OR rightArrow to advance<br />
+            <span style="font-size: 14px; font-weight: 900">➾</span> OR Space to skip animation<br />
+            to next slide<br />
+            ⤶ OR Enter to show full content
+        </div>
+        <script>
+            // Auto-dedent all code blocks — strips formatter-added indentation
+            document.querySelectorAll(".code-block").forEach((block) => {
+                const lines = block.innerHTML.split("\n");
+                const minIndent = lines.filter((l) => l.trim().length > 0).reduce((min, l) => Math.min(min, l.match(/^(\s*)/)[1].length), Infinity);
+                block.innerHTML = lines
+                    .map((l) => (minIndent < Infinity ? l.slice(minIndent) : l))
+                    .join("\n")
+                    .trim();
+            });
+            const slides = document.querySelectorAll(".slide");
+            const total = slides.length;
+            let cur = 0;
+
+            function pendingSteps(el) {
+                return el.querySelectorAll(".step:not(.visible)");
+            }
+
+            function activate(idx) {
+                slides[cur].classList.remove("active");
+                cur = Math.max(0, Math.min(idx, total - 1));
+                slides[cur].classList.add("active");
+                updateHUD();
+            }
+
+            function nextInPage() {
+                const p = pendingSteps(slides[cur]);
+                if (p.length > 0) {
+                    p[0].classList.add("visible");
+                    return false;
+                }
+                return true;
+            }
+            function advance() {
+                if (nextInPage() && cur < total - 1) activate(cur + 1);
+            }
+
+            function back() {
+                slides[cur].querySelectorAll(".step.visible").forEach((s) => s.classList.remove("visible"));
+                if (cur > 0) activate(cur - 1);
+            }
+
+            function updateHUD() {
+                const n = cur + 1;
+                document.getElementById("counter").textContent = `${n} / ${total}`;
+                document.getElementById("badge").textContent = `${String(n).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
+                document.getElementById("prog").style.width = `${(n / total) * 100}%`;
+            }
+
+            function showFullContent() {
+                const p = pendingSteps(slides[cur]);
+                let i = 0;
+                while (i < p.length) {
+                    p[i].classList.add("visible");
+                    i++;
+                }
+            }
+
+            function skipPage() {
+                if (cur < total - 1) activate(cur + 1);
+            }
+
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    advance();
+                }
+                if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    back();
+                }
+                if (e.key === " ") {
+                    e.preventDefault();
+                    skipPage();
+                }
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    showFullContent();
+                }
+            });
+
+            document.getElementById("showFullContentBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                showFullContent();
+            });
+            document.getElementById("nextSlideBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                skipPage();
+            });
+            document.getElementById("nextBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                advance();
+            });
+            document.getElementById("prevBtn").addEventListener("click", (e) => {
+                e.stopPropagation();
+                back();
+            });
+
+            // Click anywhere on slide to advance
+            document.querySelectorAll(".slide").forEach((s) => {
+                s.addEventListener("click", (e) => {
+                    if (!e.target.closest(".hud")) nextInPage();
+                });
+            });
+
+            updateHUD();
+        </script>
+    </body>
+</html>
